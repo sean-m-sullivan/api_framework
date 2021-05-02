@@ -15,18 +15,17 @@ ANSIBLE_METADATA = {"metadata_version": "1.1", "status": ["preview"], "supported
 
 DOCUMENTATION = """
 ---
-module: ah_token
+module: token
 author: "John Westcott IV (@john-westcott-iv), Sean Sullivan (@sean-m-sullivan)"
-version_added: "2.10"
-short_description: create, update, or destroy Automation Hub tokens.
+version_added: "0.0.0"
+short_description: create, update, or destroy tokens.
 description:
-    - Create or destroy Automation Hub tokens. See
-      U(https://www.ansible.com/tower) for an overview.
+    - Create or destroy tokens.
     - In addition, the module sets an Ansible fact which can be passed into other
-      ah_* modules as the parameter ah_oauthtoken. See examples for usage.
+      modules as the parameter oauthtoken. See examples for usage.
     - Because of the sensitive nature of tokens, the created token value is only available once
       through the Ansible fact. (See RETURN for details)
-    - Due to the nature of tokens in Automation Hub this module is not idempotent. A second will
+    - Due to the nature of tokens this module is not idempotent. A second will
       with the same parameters will create a new token.
     - If you are creating a temporary token for use with modules you should delete the token
       when you are done with it. See the example for how to do it.
@@ -37,32 +36,32 @@ options:
       choices: ["present", "absent"]
       default: "present"
       type: str
-extends_documentation_fragment: redhat_cop.ah_configuration.auth
+extends_documentation_fragment: redhat_cop.api_framework.auth
 """
 
 EXAMPLES = """
 - name: Create a new token using an existing token
-  ah_token:
-    ah_token: "{{ my_existing_token }}"
+  token:
+    token: "{{ my_existing_token }}"
 
 - name: Delete this token
-  ah_token:
-    ah_token: "{{ ah_token }}"
+  token:
+    token: "{{ token }}"
     state: absent
 
 - name: Create a new token using username/password
-  ah_token:
+  token:
     state: present
-    ah_username: "{{ my_username }}"
-    ah_password: "{{ my_password }}"
+    username: "{{ my_username }}"
+    password: "{{ my_password }}"
 
 - name: Use our new token to make another call
   namespace:
-    ah_token: "{{ ah_token }}"
+    token: "{{ token }}"
 """
 
 RETURN = """
-ah_token:
+token:
   type: dict
   description: An Ansible Fact variable representing a Tower token object which can be used for auth in subsequent modules. See examples for usage.
   contains:
@@ -75,7 +74,7 @@ ah_token:
   returned: on successful create
 """
 
-from ..module_utils.ah_module import AHModule
+from ..module_utils.module import Module
 
 
 def return_token(module, last_response):
@@ -84,8 +83,8 @@ def return_token(module, last_response):
     # This method will return the entire token object we got back so that a user has access to the token
 
     module.json_output["ansible_facts"] = {
-        # 'ah_token': last_response['token'],
-        "ah_token": last_response,
+        # 'token': last_response['token'],
+        "token": last_response,
     }
     module.exit_json(**module.json_output)
 
@@ -97,7 +96,7 @@ def main():
     )
 
     # Create a module for ourselves
-    module = AHModule(argument_spec=argument_spec)
+    module = Module(argument_spec=argument_spec)
 
     # Extract our parameters
     state = module.params.get("state")

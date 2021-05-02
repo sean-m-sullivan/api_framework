@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {"metadata_version": "1.1", "status": ["preview"], "supported
 
 DOCUMENTATION = """
 ---
-module: ah_namespace
+module: namespace
 author: "Sean Sullivan (@sean-m-sullivan)"
 short_description: create, update, or destroy Automation Hub Namespace.
 description:
@@ -92,13 +92,13 @@ options:
           type: list
           required: True
 
-extends_documentation_fragment: redhat_cop.ah_configuration.auth
+extends_documentation_fragment: redhat_cop.api_framework.auth
 """
 
 
 EXAMPLES = """
 - name: Create Tower Ping job template
-  ah_namespace:
+  namespace:
     name: Redhat
     company: Redhat
     email: user@example.com
@@ -115,7 +115,7 @@ EXAMPLES = """
 
 """
 
-from ..module_utils.ah_module import AHModule
+from ..module_utils.module import Module
 
 
 def main():
@@ -134,7 +134,7 @@ def main():
     )
 
     # Create a module for ourselves
-    module = AHModule(argument_spec=argument_spec)
+    module = Module(argument_spec=argument_spec)
 
     # Extract our parameters
     name = module.params.get("name")

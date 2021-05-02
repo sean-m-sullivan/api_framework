@@ -11,4 +11,4 @@ v0.1.0
 Major Changes
 -------------
 
-- Initial release of ansible_config, namespace, publish roles and ah_namespace, ah_token modules
+- Initial release of api framework

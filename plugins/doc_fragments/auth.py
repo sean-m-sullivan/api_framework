@@ -13,42 +13,36 @@ class ModuleDocFragment(object):
     # Ansible Galaxy documentation fragment
     DOCUMENTATION = r"""
 options:
-  ah_host:
+  host:
     description:
-    - URL to Ansible Galaxy or Automation Hub instance.
-    - If value not set, will try environment variable C(AH_HOST)
+    - URL to Host instance.
+    - If value not set, will try environment variable C(HOST)
     - If value not specified by any means, the value of C(127.0.0.1) will be used
     type: str
-  ah_username:
+  username:
     description:
-    - Username for your Ansible Galaxy or Automation Hub instance.
-    - If value not set, will try environment variable C(AH_USERNAME)
+    - Username for your Host instance.
+    - If value not set, will try environment variable C(USERNAME)
     type: str
-  ah_password:
+  password:
     description:
-    - Password for your Ansible Galaxy or Automation Hub instance.
-    - If value not set, will try environment variable C(AH_PASSWORD)
+    - Password for your Host instance.
+    - If value not set, will try environment variable C(PASSWORD)
     type: str
-  ah_token:
+  token:
     description:
-    - The Ansible Galaxy or Automation Hub API token to use.
+    - The Host API token to use.
     - This value can be in one of two formats.
     - A string which is the token itself. (i.e. bqV5txm97wqJqtkxlMkhQz0pKhRMMX)
-    - A dictionary structure as returned by the ah_token module.
-    - If value not set, will try environment variable C(AH_API_TOKEN)
+    - A dictionary structure as returned by the token module.
+    - If value not set, will try environment variable C(API_TOKEN)
     type: raw
   validate_certs:
     description:
     - Whether to allow insecure connections to Galaxy or Automation Hub Server.
     - If C(no), SSL certificates will not be validated.
     - This should only be used on personally controlled sites using self-signed certificates.
-    - If value not set, will try environment variable C(AH_VERIFY_SSL)
+    - If value not set, will try environment variable C(VERIFY_SSL)
     type: bool
-    aliases: [ ah_verify_ssl ]
-  ah_path_prefix:
-    description:
-    - API path used to access the api.
-    - For galaxy_ng this is either 'automation-hub' or the custom prefix used on install with GALAXY_API_PATH_PREFIX
-    - For Automation Hub this is 'galaxy'
-    type: str
+    aliases: [ verify_ssl ]
 """

@@ -18,30 +18,27 @@ class ItemNotDefined(Exception):
     pass
 
 
-class AHModule(AnsibleModule):
+class Module(AnsibleModule):
     url = None
     session = None
     AUTH_ARGSPEC = dict(
-        ah_host=dict(required=False, fallback=(env_fallback, ["AH_HOST"])),
-        ah_username=dict(required=False, fallback=(env_fallback, ["AH_USERNAME"])),
-        ah_password=dict(no_log=True, required=False, fallback=(env_fallback, ["AH_PASSWORD"])),
-        ah_path_prefix=dict(required=False, fallback=(env_fallback, ["GALAXY_API_PATH_PREFIX"])),
-        validate_certs=dict(type="bool", aliases=["ah_verify_ssl"], required=False, fallback=(env_fallback, ["AH_VERIFY_SSL"])),
-        ah_token=dict(type="raw", no_log=True, required=False, fallback=(env_fallback, ["AH_API_TOKEN"])),
+        host=dict(required=False, fallback=(env_fallback, ["HOST"])),
+        username=dict(required=False, fallback=(env_fallback, ["USERNAME"])),
+        password=dict(no_log=True, required=False, fallback=(env_fallback, ["PASSWORD"])),
+        validate_certs=dict(type="bool", aliases=["verify_ssl"], required=False, fallback=(env_fallback, ["VERIFY_SSL"])),
+        token=dict(type="raw", no_log=True, required=False, fallback=(env_fallback, ["API_TOKEN"])),
     )
     ENCRYPTED_STRING = "$encrypted$"
     short_params = {
-        "host": "ah_host",
-        "username": "ah_username",
-        "password": "ah_password",
+        "host": "host",
+        "username": "username",
+        "password": "password",
         "verify_ssl": "validate_certs",
-        "path_prefix": "ah_path_prefix",
-        "oauth_token": "ah_token",
+        "oauth_token": "token",
     }
     IDENTITY_FIELDS = {}
     ENCRYPTED_STRING = "$encrypted$"
     host = "127.0.0.1"
-    path_prefix = "galaxy"
     username = None
     password = None
     verify_ssl = True
@@ -52,7 +49,7 @@ class AHModule(AnsibleModule):
 
     def __init__(self, argument_spec=None, direct_params=None, error_callback=None, warn_callback=None, **kwargs):
         full_argspec = {}
-        full_argspec.update(AHModule.AUTH_ARGSPEC)
+        full_argspec.update(Module.AUTH_ARGSPEC)
         full_argspec.update(argument_spec)
         kwargs["supports_check_mode"] = True
 
@@ -64,7 +61,7 @@ class AHModule(AnsibleModule):
         if direct_params is not None:
             self.params = direct_params
         #        else:
-        super(AHModule, self).__init__(argument_spec=full_argspec, **kwargs)
+        super(Module, self).__init__(argument_spec=full_argspec, **kwargs)
         self.session = Request(cookies=CookieJar(), validate_certs=self.verify_ssl)
 
         # Parameters specified on command line will override settings in any config
@@ -73,18 +70,18 @@ class AHModule(AnsibleModule):
             if direct_value is not None:
                 setattr(self, short_param, direct_value)
 
-        # Perform magic depending on whether ah_token is a string or a dict
-        if self.params.get("ah_token"):
-            token_param = self.params.get("ah_token")
+        # Perform magic depending on whether token is a string or a dict
+        if self.params.get("token"):
+            token_param = self.params.get("token")
             if type(token_param) is dict:
                 if "token" in token_param:
-                    self.oauth_token = self.params.get("ah_token")["token"]
+                    self.oauth_token = self.params.get("token")["token"]
                 else:
-                    self.fail_json(msg="The provided dict in ah_token did not properly contain the token entry")
+                    self.fail_json(msg="The provided dict in token did not properly contain the token entry")
             elif isinstance(token_param, string_types):
-                self.oauth_token = self.params.get("ah_token")
+                self.oauth_token = self.params.get("token")
             else:
-                error_msg = "The provided ah_token type was not valid ({0}). Valid options are str or dict.".format(type(token_param).__name__)
+                error_msg = "The provided token type was not valid ({0}). Valid options are str or dict.".format(type(token_param).__name__)
                 self.fail_json(msg=error_msg)
 
         # Perform some basic validation
@@ -114,13 +111,8 @@ class AHModule(AnsibleModule):
         if not endpoint.startswith("/"):
             endpoint = "/{0}".format(endpoint)
         if not endpoint.startswith("/api/"):
-            if self.path_prefix == "galaxy":
-                endpoint = "api/galaxy/v3{0}".format(endpoint)
-            elif self.path_prefix == "galaxy":
-                endpoint = "api/automation-hub/v3{0}".format(endpoint)
-            else:
-                endpoint = "api/{0}/v3{1}".format(self.path_prefix, endpoint)
-        if not endpoint.endswith("/") and "?" not in endpoint:
+            endpoint = "/api/v2{0}".format(endpoint)
+        if not endpoint.endswith('/') and '?' not in endpoint:
             endpoint = "{0}/".format(endpoint)
 
         # Update the URL path with the endpoint
@@ -136,21 +128,21 @@ class AHModule(AnsibleModule):
         if self.error_callback:
             self.error_callback(**kwargs)
         else:
-            super(AHModule, self).fail_json(**kwargs)
+            super(Module, self).fail_json(**kwargs)
 
     def exit_json(self, **kwargs):
         # Try to log out if we are authenticated
-        super(AHModule, self).exit_json(**kwargs)
+        super(Module, self).exit_json(**kwargs)
 
     def warn(self, warning):
         if self.warn_callback is not None:
             self.warn_callback(warning)
         else:
-            super(AHModule, self).warn(warning)
+            super(Module, self).warn(warning)
 
     @staticmethod
     def get_name_field_from_endpoint(endpoint):
-        return AHModule.IDENTITY_FIELDS.get(endpoint, "name")
+        return Module.IDENTITY_FIELDS.get(endpoint, "name")
 
     def get_endpoint(self, endpoint, *args, **kwargs):
         return self.make_request("GET", endpoint, **kwargs)
@@ -193,7 +185,7 @@ class AHModule(AnsibleModule):
                 self.fail_json(msg="The host sent back a server error ({1}): {0}. Please check the logs and try again later".format(url.path, he))
             # Sanity check: Did we fail to authenticate properly?  If so, fail out now; this is always a failure.
             elif he.code == 401:
-                self.fail_json(msg="Invalid Automation Hub authentication credentials for {0} (HTTP 401).".format(url.path))
+                self.fail_json(msg="Invalid authentication credentials for {0} (HTTP 401).".format(url.path))
             # Sanity check: Did we get a forbidden response, which means that the user isn't allowed to do this? Report that.
             elif he.code == 403:
                 self.fail_json(msg="You don't have permission to {1} to {0} (HTTP 403).".format(url.path, method))
@@ -294,13 +286,7 @@ class AHModule(AnsibleModule):
             # If we have a username and password, we need to get a session cookie
 
             # Post to the tokens endpoint with baisc auth to try and get a token
-            if self.path_prefix == "galaxy":
-                api_token_url = (self.url._replace(path="/api/galaxy/v3/auth/token/")).geturl()
-            elif self.path_prefix == "automation-hub":
-                api_token_url = (self.url._replace(path="/api/automation-hub/v3/auth/token/")).geturl()
-            else:
-                token_path = "api/{0}/v3/auth/token/".format(self.path_prefix)
-                api_token_url = (self.url._replace(path=token_path)).geturl()
+            api_token_url = (self.url._replace(path='/api/v2/tokens/')).geturl()
 
             try:
                 response = self.session.open(
@@ -335,7 +321,7 @@ class AHModule(AnsibleModule):
         self.authenticated = True
 
     def existing_item_add_url(self, existing_item, endpoint):
-        # Add url and type to response as its missing in current iteration of Automation Hub.
+        # Add url and type to response if its missing.
         existing_item["url"] = "{0}{1}/".format(self.build_url(endpoint).geturl()[len(self.host) :], existing_item["name"])
         existing_item["type"] = endpoint
         return existing_item
@@ -648,13 +634,13 @@ class AHModule(AnsibleModule):
         """
         if isinstance(obj, dict):
             for val in obj.values():
-                if AHModule.has_encrypted_values(val):
+                if Module.has_encrypted_values(val):
                     return True
         elif isinstance(obj, list):
             for val in obj:
-                if AHModule.has_encrypted_values(val):
+                if Module.has_encrypted_values(val):
                     return True
-        elif obj == AHModule.ENCRYPTED_STRING:
+        elif obj == Module.ENCRYPTED_STRING:
             return True
         return False
 
